@@ -15,6 +15,9 @@ let tabButtons: NodeListOf<HTMLButtonElement>;
 let jetViewBar: HTMLElement | null = null;
 let viewButtons: NodeListOf<HTMLButtonElement>;
 let btnOpenRefs: HTMLElement | null = null;
+let tntWorldTooltip: HTMLElement | null = null;
+let isTntHovered = false;
+const tntAnchorVec = new THREE.Vector3();
 
 // 1. Scene setup
 const scene = new THREE.Scene();
@@ -359,6 +362,11 @@ function setViewMode(mode: ViewMode) {
   if (btnOpenRefs) {
     btnOpenRefs.style.display = isGameAsset ? 'none' : 'flex';
   }
+
+  // Reset interactive states
+  isTntHovered = false;
+  if (tntWorldTooltip) tntWorldTooltip.classList.add('hidden');
+  tntTrap.reset();
 
   // Hide all models first
   chair.root.visible = false;
@@ -815,6 +823,100 @@ function initDOM() {
     }
   });
 
+  tntWorldTooltip = document.getElementById('tnt-world-tooltip');
+
+  // 3D Raycasting & Click Interactions (TNT Explosion, etc.)
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  let pointerDownPos = { x: 0, y: 0 };
+  let pointerDownTime = 0;
+
+  window.addEventListener('pointerdown', (e) => {
+    pointerDownPos = { x: e.clientX, y: e.clientY };
+    pointerDownTime = performance.now();
+  });
+
+  window.addEventListener('pointerup', (e) => {
+    const modal = document.getElementById('ref-modal');
+    if (modal && !modal.classList.contains('hidden')) return;
+
+    const uiOverlay = document.getElementById('ui-overlay');
+    if (uiOverlay && uiOverlay.contains(e.target as Node)) return;
+
+    const dx = e.clientX - pointerDownPos.x;
+    const dy = e.clientY - pointerDownPos.y;
+    const dist = Math.hypot(dx, dy);
+    const dt = performance.now() - pointerDownTime;
+
+    // Must be a clean click, not an orbit pan/drag
+    if (dist > 8 || dt > 600) return;
+
+    if (tntTrap.root.visible && !tntTrap.isExploding()) {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      const hits = raycaster.intersectObject(tntTrap.root, true);
+      if (hits.length > 0) {
+        isTntHovered = false;
+        if (tntWorldTooltip) tntWorldTooltip.classList.add('hidden');
+        renderer.domElement.style.cursor = 'default';
+        tntTrap.triggerExplosion();
+      }
+    }
+  });
+
+  window.addEventListener('pointermove', (e) => {
+    const modal = document.getElementById('ref-modal');
+    if (modal && !modal.classList.contains('hidden')) {
+      isTntHovered = false;
+      if (tntWorldTooltip) tntWorldTooltip.classList.add('hidden');
+      renderer.domElement.style.cursor = 'default';
+      return;
+    }
+
+    const uiOverlay = document.getElementById('ui-overlay');
+    if (uiOverlay && uiOverlay.contains(e.target as Node)) {
+      isTntHovered = false;
+      if (tntWorldTooltip) tntWorldTooltip.classList.add('hidden');
+      renderer.domElement.style.cursor = 'default';
+      return;
+    }
+
+    if (tntTrap.root.visible && !tntTrap.isExploding()) {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      const hits = raycaster.intersectObject(tntTrap.root, true);
+      if (hits.length > 0) {
+        isTntHovered = true;
+        renderer.domElement.style.cursor = 'pointer';
+        return;
+      }
+    }
+    isTntHovered = false;
+    if (tntWorldTooltip) tntWorldTooltip.classList.add('hidden');
+    renderer.domElement.style.cursor = 'default';
+  });
+
+  window.addEventListener('pointerleave', () => {
+    isTntHovered = false;
+    if (tntWorldTooltip) tntWorldTooltip.classList.add('hidden');
+    renderer.domElement.style.cursor = 'default';
+  });
+
+  document.addEventListener('mouseleave', () => {
+    isTntHovered = false;
+    if (tntWorldTooltip) tntWorldTooltip.classList.add('hidden');
+    renderer.domElement.style.cursor = 'default';
+  });
+
+  // Expose for testing & debug
+  (window as any).camera = camera;
+  (window as any).tntTrap = tntTrap;
+  (window as any).triggerTntExplosion = () => tntTrap.triggerExplosion();
+
   // Check URL query parameter (?model=paris|sagrada|jet|showcase|car|coin|tnt|chair)
   const params = new URLSearchParams(window.location.search);
 
@@ -858,7 +960,9 @@ const clock = new THREE.Clock();
 function animate() {
   requestAnimationFrame(animate);
 
-  const delta = clock.getDelta();
+  // Clamp delta to prevent huge jumps when tab is throttled or during debugger pauses
+  const rawDelta = clock.getDelta();
+  const delta = Math.min(rawDelta, 0.05);
   const elapsed = clock.getElapsedTime();
 
   controls.update();
@@ -872,6 +976,29 @@ function animate() {
   if (coinExtra1.root.visible) coinExtra1.tick(delta, elapsed + 0.8);
   if (coinExtra2.root.visible) coinExtra2.tick(delta, elapsed + 1.6);
   if (tntTrap.root.visible) tntTrap.tick(delta, elapsed);
+
+  // 3D World Anchored Hover Tooltip Projection
+  if (tntWorldTooltip) {
+    if (isTntHovered && tntTrap.root.visible && !tntTrap.isExploding()) {
+      // Anchored right above the dynamite bundle apex (~0.46 Y)
+      tntAnchorVec.set(0, 0.46, 0);
+      tntTrap.root.localToWorld(tntAnchorVec);
+      tntAnchorVec.project(camera);
+
+      // Verify that object is in front of the camera clip plane
+      if (tntAnchorVec.z < 1.0) {
+        const screenX = (tntAnchorVec.x * 0.5 + 0.5) * window.innerWidth;
+        const screenY = (-(tntAnchorVec.y * 0.5) + 0.5) * window.innerHeight;
+        tntWorldTooltip.style.left = `${screenX}px`;
+        tntWorldTooltip.style.top = `${screenY}px`;
+        tntWorldTooltip.classList.remove('hidden');
+      } else {
+        tntWorldTooltip.classList.add('hidden');
+      }
+    } else {
+      tntWorldTooltip.classList.add('hidden');
+    }
+  }
 
   renderer.render(scene, camera);
 }
