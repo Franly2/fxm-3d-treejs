@@ -43,4 +43,12 @@ export const REFERENCES_DATA: Record<string, ModelReferences> = {
       { id: '1', imageSrc: './references/referensi.png' },
     ],
   },
+  fan: {
+    modelId: 'fan',
+    modelName: 'Retro Electric Desk Fan',
+    items: [
+      { id: '1', imageSrc: './references/fan-reference-1.png' },
+      { id: '2', imageSrc: './references/fan-reference-2.png' },
+    ],
+  },
 };

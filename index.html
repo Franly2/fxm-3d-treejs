@@ -19,11 +19,12 @@
           <button class="tab-btn active" data-mode="paris">Paris (Eiffel Tower)</button>
           <button class="tab-btn" data-mode="sagrada">Sagrada Familia</button>
           <button class="tab-btn" data-mode="jet">Fighter Jet (MiG-23)</button>
-          <button class="tab-btn" data-mode="showcase">All Game Assets</button>
+          <button class="tab-btn" data-mode="fan">Retro Desk Fan</button>
+          <button class="tab-btn" data-mode="chair">Red Armchair</button>
           <button class="tab-btn" data-mode="car">Race Car</button>
           <button class="tab-btn" data-mode="coin">Coin</button>
           <button class="tab-btn" data-mode="tnt">TNT</button>
-          <button class="tab-btn" data-mode="chair">Red Armchair</button>
+          <button class="tab-btn" data-mode="showcase">All Game Assets</button>
         </div>
 
         <!-- Reference Photos Action Button (no emojis) -->
@@ -31,6 +32,10 @@
           <button id="btn-open-refs" class="ref-action-btn" title="View reference photos and blueprints used for this model">
             <span class="btn-text">Reference Photos & Blueprints</span>
             <span class="btn-badge">View Sources</span>
+          </button>
+          <button id="btn-toggle-rotate" class="rotate-action-btn" title="Toggle Auto Rotate 360°">
+            <span class="btn-text">Auto Rotate</span>
+            <span class="btn-status" id="rotate-status">OFF</span>
           </button>
         </div>
 
@@ -55,6 +60,7 @@
         <div class="export-bar">
           <span class="export-title">Download 3D Models (.GLB):</span>
           <div class="export-links">
+            <a class="export-btn" href="./models/fan.glb" download="fan.glb">fan.glb</a>
             <a class="export-btn" href="./models/paris.glb" download="paris.glb">paris.glb</a>
             <a class="export-btn" href="./models/sagrada.glb" download="sagrada.glb">sagrada.glb</a>
             <a class="export-btn" href="./models/jet.glb" download="jet.glb">jet.glb</a>
@@ -92,6 +98,7 @@
           <button class="ref-nav-btn active" data-model="paris">Eiffel Tower</button>
           <button class="ref-nav-btn" data-model="sagrada">Sagrada Família</button>
           <button class="ref-nav-btn" data-model="jet">MiG-23 Fighter Jet</button>
+          <button class="ref-nav-btn" data-model="fan">Retro Desk Fan</button>
           <button class="ref-nav-btn" data-model="chair">Red Armchair</button>
         </div>
 

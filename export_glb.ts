@@ -8,6 +8,7 @@ import { createRoadModel } from './src/model/roadModel';
 import { createJetModel } from './src/model/jetModel';
 import { createSagradaModel } from './src/model/sagradaModel';
 import { createParisModel } from './src/model/parisModel';
+import { createFanModel } from './src/model/fanModel';
 import fs from 'fs';
 import path from 'path';
 
@@ -28,6 +29,52 @@ class NodeFileReader {
   }
 }
 (globalThis as any).FileReader = NodeFileReader;
+
+class NodeCanvas {
+  width = 256;
+  height = 256;
+  toDataURL() {
+    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  }
+  toBlob(cb: any) {
+    if (cb) cb(new Blob([new Uint8Array(4)], { type: 'image/png' }));
+  }
+  async convertToBlob() {
+    return new Blob([new Uint8Array(4)], { type: 'image/png' });
+  }
+}
+(globalThis as any).HTMLCanvasElement = NodeCanvas;
+
+if (typeof (globalThis as any).document === 'undefined') {
+  (globalThis as any).document = {
+    createElement: (tag: string) => {
+      if (tag === 'canvas') {
+        const dummyCtx: any = {
+          canvas: null,
+          getImageData: (_x: number, _y: number, w: number, h: number) => ({
+            data: new Uint8ClampedArray((w || 256) * (h || 256) * 4),
+          }),
+          createImageData: (w: number, h: number) => ({
+            data: new Uint8ClampedArray((w || 256) * (h || 256) * 4),
+          }),
+          createLinearGradient: () => ({ addColorStop: () => {} }),
+          createRadialGradient: () => ({ addColorStop: () => {} }),
+          measureText: () => ({ width: 50 }),
+        };
+        const proxyCtx = new Proxy(dummyCtx, {
+          get(target, prop) {
+            if (prop in target) return target[prop];
+            return () => {};
+          },
+        });
+        const c = new NodeCanvas() as any;
+        c.getContext = () => proxyCtx;
+        return c;
+      }
+      return {};
+    },
+  };
+}
 
 const exporter = new GLTFExporter();
 
@@ -138,8 +185,12 @@ async function main() {
   await exportModel(['sagrada', 'sagradaFamilia'], sagrada.root);
 
   // 7. Paris (Menara Eiffel, Sungai Seine, Jembatan & Bateau-Mouche)
-  const paris = createParisModel();
-  await exportModel(['paris', 'eiffelParis'], paris.root);
+  // const paris = createParisModel();
+  // await exportModel(['paris', 'eiffelParis'], paris.root);
+
+  // 8. Kipas Retro (Retro Desk Fan)
+  const fan = createFanModel();
+  await exportModel(['fan', 'retroFan', 'retro_fan'], fan.root);
 
   console.log('--------------------------------------------------');
   console.log('SEMUA MODEL OPTIMAL BERHASIL DI-EXPORT KE .GLB!');

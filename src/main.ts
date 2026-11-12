@@ -9,6 +9,7 @@ import { createRoadModel } from './model/roadModel';
 import { createJetModel } from './model/jetModel';
 import { createSagradaModel } from './model/sagradaModel';
 import { createParisModel } from './model/parisModel';
+import { createFanModel } from './model/fanModel';
 import { REFERENCES_DATA, type ReferenceItem } from './referencesData';
 
 let tabButtons: NodeListOf<HTMLButtonElement>;
@@ -166,7 +167,10 @@ scene.add(sagrada.root);
 const paris = createParisModel();
 scene.add(paris.root);
 
-type ViewMode = 'paris' | 'sagrada' | 'jet' | 'showcase' | 'car' | 'coin' | 'tnt' | 'chair';
+const fan = createFanModel();
+scene.add(fan.root);
+
+type ViewMode = 'paris' | 'sagrada' | 'jet' | 'fan' | 'showcase' | 'car' | 'coin' | 'tnt' | 'chair';
 let currentMode: ViewMode = 'paris';
 
 // 8. Camera View Presets
@@ -277,6 +281,26 @@ function setCameraView(view: string) {
       camera.position.set(1.95, 0.88, 2.25);
       controls.target.set(0, 0.25, 0.02);
     }
+  } else if (currentMode === 'fan') {
+    camera.fov = 32;
+    if (view === 'front') {
+      camera.position.set(0, 0.40, 1.35);
+      controls.target.set(0, 0.36, 0);
+    } else if (view === 'side') {
+      camera.position.set(1.35, 0.40, 0.22);
+      controls.target.set(0, 0.36, 0);
+    } else if (view === 'top') {
+      camera.position.set(0.001, 1.6, 0);
+      controls.target.set(0, 0.28, 0);
+    } else if (view === 'controls') {
+      camera.fov = 24;
+      camera.position.set(0, 0.52, 0.72);
+      controls.target.set(0, 0.08, 0.22);
+    } else {
+      // 'persp'
+      camera.position.set(0.85, 0.65, 1.15);
+      controls.target.set(0, 0.35, 0);
+    }
   } else if (currentMode === 'chair') {
     camera.fov = 25;
     if (view === 'front') {
@@ -379,6 +403,7 @@ function setViewMode(mode: ViewMode) {
   jet.root.visible = false;
   sagrada.root.visible = false;
   paris.root.visible = false;
+  fan.root.visible = false;
   if (jetViewBar) jetViewBar.style.display = 'flex';
 
   // Reset transforms
@@ -497,6 +522,30 @@ function setViewMode(mode: ViewMode) {
           b.style.display = 'inline-block';
           b.textContent = jetViews[i].label;
           b.dataset.view = jetViews[i].view;
+        } else {
+          b.style.display = 'none';
+        }
+      });
+    }
+
+    setCameraView('persp');
+  } else if (mode === 'fan') {
+    fan.root.visible = true;
+
+    const fanViews = [
+      { label: 'Perspective', view: 'persp' },
+      { label: 'Front (Airflow)', view: 'front' },
+      { label: 'Side Elevation', view: 'side' },
+      { label: 'Top View', view: 'top' },
+      { label: 'Speed Controls', view: 'controls' },
+    ];
+    if (viewButtons) {
+      const vBtns = Array.from(viewButtons);
+      vBtns.forEach((b, i) => {
+        if (i < fanViews.length) {
+          b.style.display = 'inline-block';
+          b.textContent = fanViews[i].label;
+          b.dataset.view = fanViews[i].view;
         } else {
           b.style.display = 'none';
         }
@@ -642,6 +691,7 @@ function mapModeToRefModel(mode: string): string {
   if (mode === 'paris') return 'paris';
   if (mode === 'sagrada') return 'sagrada';
   if (mode === 'jet') return 'jet';
+  if (mode === 'fan') return 'fan';
   if (mode === 'chair') return 'chair';
   return 'paris';
 }
@@ -774,6 +824,20 @@ function initDOM() {
     });
   }
 
+  // Auto Rotate 360° Button Setup
+  const btnToggleRotate = document.getElementById('btn-toggle-rotate');
+  const rotateStatus = document.getElementById('rotate-status');
+  if (btnToggleRotate) {
+    btnToggleRotate.addEventListener('click', () => {
+      controls.autoRotate = !controls.autoRotate;
+      controls.autoRotateSpeed = 1.6;
+      btnToggleRotate.classList.toggle('active', controls.autoRotate);
+      if (rotateStatus) {
+        rotateStatus.textContent = controls.autoRotate ? 'ON' : 'OFF';
+      }
+    });
+  }
+
   if (modalClose) {
     modalClose.addEventListener('click', () => {
       closeReferenceModal();
@@ -864,6 +928,18 @@ function initDOM() {
         tntTrap.triggerExplosion();
       }
     }
+
+    if (fan.root.visible) {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      const hits = raycaster.intersectObject(fan.root, true);
+      const hit = hits.find((h) => fan.isClickable(h));
+      if (hit) {
+        fan.onClick(hit);
+      }
+    }
   });
 
   window.addEventListener('pointermove', (e) => {
@@ -895,6 +971,19 @@ function initDOM() {
         return;
       }
     }
+
+    if (fan.root.visible) {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      const hits = raycaster.intersectObject(fan.root, true);
+      const hit = hits.find((h) => fan.isClickable(h));
+      if (hit) {
+        renderer.domElement.style.cursor = 'pointer';
+        return;
+      }
+    }
     isTntHovered = false;
     if (tntWorldTooltip) tntWorldTooltip.classList.add('hidden');
     renderer.domElement.style.cursor = 'default';
@@ -915,6 +1004,7 @@ function initDOM() {
   // Expose for testing & debug
   (window as any).camera = camera;
   (window as any).tntTrap = tntTrap;
+  (window as any).fan = fan;
   (window as any).triggerTntExplosion = () => tntTrap.triggerExplosion();
 
   // Check URL query parameter (?model=paris|sagrada|jet|showcase|car|coin|tnt|chair)
@@ -970,6 +1060,7 @@ function animate() {
   if (paris.root.visible) paris.tick(delta, elapsed);
   if (sagrada.root.visible) sagrada.tick(delta, elapsed);
   if (jet.root.visible) jet.tick(delta, elapsed);
+  if (fan.root.visible) fan.tick(delta, elapsed);
   if (chair.root.visible) chair.tick(delta, elapsed);
   if (raceCar.root.visible) raceCar.tick(delta, elapsed);
   if (coinMain.root.visible) coinMain.tick(delta, elapsed);
