@@ -9,9 +9,9 @@ import { createEiffelTextures } from './eiffelTexture';
  * Super-Detailed Procedural 3D Reconstruction of Paris (paris.png)
  *
  * Strict Fidelity to paris.png:
- *  1. Sungai Seine (The Seine River): Realistic rippling turquoise-blue river water,
+ *  1. The Seine River: Realistic rippling turquoise-blue river water,
  *     surface reflections, and frothy boat wake.
- *  2. Menara Eiffel (Eiffel Tower): Authentic warm bronze/copper wrought puddled iron
+ *  2. Eiffel Tower: Authentic warm bronze/copper wrought puddled iron
  *     bathed in late-afternoon golden-hour sunlight.
  *     - 4 massive leaning parabolic box-lattice pylon legs with foundation pedestals.
  *     - Monumental semicircular decorative arch with openwork radial lattice trusses.
@@ -21,21 +21,21 @@ import { createEiffelTextures } from './eiffelTexture';
  *     - TRUE OPENWORK LATTICE SPIRE (Level 3): 4 converging corner girders with 8 belt courses
  *       and X-lattice bracing (fully transparent, you can see the sky through it!).
  *     - Observation dome, lantern room, and radio antenna mast with beacon light.
- *  3. Perahu Wisata Seine (Bateaux-Mouches River Cruise Boat):
+ *  3. Bateaux-Mouches River Cruise Boat:
  *     - Foreground cruise boat with sleek white catamaran hull, dark waterline, and panoramic curved glass canopy.
  *     - Arched structural canopy ribs, passenger silhouettes, and French Tricolor Flag (Bleu-Blanc-Rouge) at stern.
  *     - Secondary double-decker river cruiser / barge moored along the quayside.
- *  4. Jembatan Pont d'Iéna (Stone Arch Bridge):
+ *  4. Pont d'Iéna (Stone Arch Bridge):
  *     - Classical segmental stone arches spanning across the river Seine.
  *     - Pier cutwaters, carved eagle relief medallions, classical stone balustrade, and lampposts.
  *     - Monumental equestrian warrior statues on grand rectangular stone pedestals at the bridge entrance.
- *  5. Lansekap Tepi Sungai & Dinding Dermaga (Quayside Promenade & Tents):
+ *  5. Quayside Promenade & Tents:
  *     - Quai Branly / Port de la Bourdonnais with warm limestone retaining walls and stone stairs to the water.
  *     - Rows of white festival / market pavilion tents along the upper promenade.
  *     - Manicured green hedges and stone parapets.
- *  6. Pohon-Pohon (Trees - Both Ground and Framing):
+ *  6. Trees (Ground and Framing):
  *     - Ground plane trees lining the quayside boulevard and Champ de Mars park.
- *     - Lush overhanging plane tree branches with detailed leaves framing the top-left and top-right of the photo!
+ *     - Lush overhanging plane tree branches with detailed leaves framing the top-left and top-right of the photo.
  */
 
 export interface ParisModelControls {
@@ -411,7 +411,7 @@ export function createParisModel(): ParisModelInstance {
   root.add(cityBlocksGroup);
 
   // ========================================================
-  // 2. SUNGAI SEINE (THE SEINE RIVER) — EXPANDED 360° FLOW
+  // 2. THE SEINE RIVER — EXPANDED 360° FLOW
   // ========================================================
   const riverWidth = 7.6;
   const riverLength = 1.45;
@@ -577,7 +577,7 @@ export function createParisModel(): ParisModelInstance {
   }
 
   // ========================================================
-  // 4. JEMBATAN PONT D'IÉNA (STONE ARCH BRIDGE) — GRAND CENTRAL AXIS
+  // 4. PONT D'IÉNA (STONE ARCH BRIDGE) — GRAND CENTRAL AXIS
   // Spans the Seine centrally connecting Trocadéro to Eiffel Tower
   // ========================================================
   const bridgeX = 0.05; // Exactly aligned with Eiffel Tower center & Trocadéro!
@@ -615,9 +615,9 @@ export function createParisModel(): ParisModelInstance {
   };
 
   // ========================================================
-  // MASTER GROUND FOUNDATION SLABS (LANDASAN DASAR SELURUH ASET)
-  // Menjadi lantai/tanah solid untuk SEMUA gedung, pohon, jalanan, dan menara
-  // Mencegah ada aset yang terlihat melayang di udara dari segala sudut pandang
+  // MASTER GROUND FOUNDATION SLABS (BASE PLATFORM FOR ALL ASSETS)
+  // Provides solid ground foundation for all buildings, trees, streets, and tower
+  // Ensures no floating geometry from any camera angle
   // ========================================================
   const masterGroundLeftBank = new THREE.Mesh(
     new THREE.BoxGeometry(9.80, 0.31, 5.90),

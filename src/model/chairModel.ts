@@ -51,8 +51,8 @@ export function createChairModel(): ChairRuntime {
   // ==========================================
   const backGroup = new THREE.Group();
   backGroup.name = 'Backrest';
-  const centerBowlDepth = -0.025; // Deepest concave point right in the CENTER of the seat (tepat di tengah dudukan)
-  const rearEdgeDip = -0.005;     // Rear edge is only gently dished (-5mm), NOT deeply scooped at the back
+  const centerBowlDepth = -0.025; // Deepest concave point right in the center of the seat
+  const rearEdgeDip = -0.005;     // Rear edge is only gently dished (-5mm), not deeply scooped at the back
   backGroup.position.set(0, seatHeight, -hd + 0.012);
   backGroup.rotation.x = -0.14;
 
@@ -132,10 +132,10 @@ export function createChairModel(): ChairRuntime {
   root.add(backGroup);
 
   // ==========================================
-  // 3. SEAT PAN — CENTRAL CONCAVE BOWL (CEKUNGAN TEPAT DI TENGAH DUDUKAN, TANPA BIBIR)
-  //    - Zero raised rim/bibir around the edge
-  //    - Concave depression is centered right in the MIDDLE of the seat (x = 0, z = 0)
-  //    - Side edges are clean and level (no artificial rear ramp)
+  // 3. SEAT PAN — CENTRAL CONCAVE BOWL (FLUSH INTEGRATION, ZERO LIP)
+  //    - Zero raised rim around the edge
+  //    - Concave depression is centered right in the middle of the seat (x = 0, z = 0)
+  //    - Side edges are clean and level
   // ==========================================
   const seatGroup = new THREE.Group();
   seatGroup.name = 'Seat';
@@ -168,14 +168,14 @@ export function createChairModel(): ChairRuntime {
     // Transverse concave profile: 1 at center (xn = 0), 0 at side edges (|xn| = 1)
     const xConcave = 1 - xn * xn;
 
-    // Longitudinal profile peaking in the CENTER of the seat (zn = +0.08, tepat di tengah dudukan!):
-    // - At zn = +0.08 (center of seat): zWeight = 1.00 -> y = -2.5 cm (deepest right in the middle!)
+    // Longitudinal profile peaking in the center of the seat (zn = +0.08):
+    // - At zn = +0.08 (center of seat): zWeight = 1.00 -> y = -2.5 cm (deepest right in the middle)
     // - At zn = +1.00 (front edge):     zWeight = 0.42 -> y = -1.05 cm (gentle front-center dip)
-    // - At zn = -1.00 (rear edge):      zWeight = 0.20 -> y = -0.5 cm (NOT deeply scooped at the back!)
+    // - At zn = -1.00 (rear edge):      zWeight = 0.20 -> y = -0.5 cm (gently dished at the back)
     const zShift = zn - 0.08;
     const zWeight = THREE.MathUtils.clamp(1.0 - 0.68 * zShift * zShift, 0.20, 1.0);
 
-    // Central concave dish (tepat di tengah dudukan)
+    // Central concave dish
     const centralBowl = centerBowlDepth * xConcave * zWeight;
 
     // Smooth 14mm corner fillet where the backrest pillars meet the rear seat corners

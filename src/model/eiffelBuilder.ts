@@ -57,7 +57,7 @@ export class Builder {
     this.counts[part] = (this.counts[part] ?? 0) + 1;
   }
 
-  /** Batang persegi t x t antara dua titik (koordinat dunia piksel, y ke atas). */
+  /** Square cross-section bar (t x t) between two points (pixel world coords, y up). */
   bar(part: string, mat: THREE.Material, a: THREE.Vector3, b: THREE.Vector3, t: number) {
     const dir = new THREE.Vector3().subVectors(b, a);
     const len = dir.length();
@@ -71,7 +71,7 @@ export class Builder {
     this.tally(part);
   }
 
-  /** Balok sejajar sumbu; yTop < yBot (baris piksel). */
+  /** Axis-aligned box; yTop < yBot (pixel rows). */
   box(part: string, mat: THREE.Material, x0: number, x1: number, yTop: number, yBot: number, z0: number, z1: number) {
     const g = new THREE.BoxGeometry(x1 - x0, yBot - yTop, z1 - z0);
     g.translate((x0 + x1) / 2, GY - (yTop + yBot) / 2, (z0 + z1) / 2);
@@ -81,7 +81,7 @@ export class Builder {
     this.tally(part);
   }
 
-  /** Silinder / kerucut terpancung pada sumbu menara. */
+  /** Truncated cylinder / cone centered on the tower axis. */
   cyl(part: string, mat: THREE.Material, rTop: number, rBot: number, yTop: number, yBot: number, segs = 10) {
     const g = new THREE.CylinderGeometry(rTop, rBot, yBot - yTop, segs);
     g.translate(0, GY - (yTop + yBot) / 2, 0);
@@ -91,7 +91,7 @@ export class Builder {
     this.tally(part);
   }
 
-  /** n-1 tiang tengah + 2n diagonal silang (n panel X) antara dua baris pada satu muka. */
+  /** n-1 intermediate vertical posts + 2n cross diagonals (n X-panels) between two rows on a face. */
   lattice(part: string, mat: THREE.Material, pos: Pos, yTop: number, yBot: number, n: number,
     tPost: number, tDiag: number, skip?: Skip) {
     const ym = (yTop + yBot) / 2;
@@ -108,7 +108,7 @@ export class Builder {
     }
   }
 
-  /** Sabuk horizontal sepanjang satu muka dibagi n segmen. */
+  /** Horizontal belt girder along a face divided into n segments. */
   belt(part: string, mat: THREE.Material, pos: Pos, y: number, n: number, t: number, skip?: Skip) {
     for (let j = 0; j < n; j++) {
       const s0 = j / n;
@@ -118,12 +118,12 @@ export class Builder {
     }
   }
 
-  /** n-1 tiang vertikal di antara dua baris. */
+  /** n-1 vertical posts between two rows. */
   posts(part: string, mat: THREE.Material, pos: Pos, yTop: number, yBot: number, n: number, t: number) {
     for (let j = 1; j < n; j++) this.bar(part, mat, pos(j / n, yTop), pos(j / n, yBot), t);
   }
 
-  /** Gabungkan geometri per material menjadi satu mesh per material. */
+  /** Merge geometries per material into single consolidated meshes. */
   build(group: THREE.Group) {
     this.buckets.forEach((list, mat) => {
       const merged = mergeGeometries(list, false);

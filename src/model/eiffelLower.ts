@@ -4,7 +4,7 @@ import {
   ARCH_CY, ARCH_R1, ARCH_R2, EIFFEL_LEG_BELTS, baseOuter, legInner, legOuter,
 } from './eiffelProfile';
 
-/** Kaki bawah (tanah -> lantai 1) + lengkung besar. y 3046 -> 3450. Sebagian perkiraan. */
+/** Base legs (ground -> level 1) + monumental arch. y 3046 -> 3450. */
 export function buildBaseLegs(b: Builder, m: EiffelMaterials) {
   const levels = [3046, 3100, 3180, 3260, 3350, 3450];
   const nPer = [16, 12, 12, 12, 12];
@@ -77,10 +77,10 @@ export function buildLevel1(b: Builder, m: EiffelMaterials) {
     b.box('l1_glass', m.glass,
       alongX ? -100 : c.x - 4, alongX ? 100 : c.x + 4, 2880, 2956,
       alongX ? c.z - 4 : -100, alongX ? c.z + 4 : 100);
-    // Tiang dan sabuk galeri lantai 1
+    // Posts and belts for Level 1 gallery
     b.posts('l1_gallery', m.iron, pos, 2874, 2960, 18, 6.5);
     for (const y of [2874, 2917, 2960]) b.belt('l1_gallery', m.iron, pos, y, 1, 7.5);
-    // Tambah silang X ganda pada setiap panel galeri lantai 1
+    // Dual X-cross bracing across Level 1 gallery panels
     for (let a = 0; a < 18; a++) {
       const s0 = a / 18;
       const s1 = (a + 1) / 18;
@@ -90,11 +90,11 @@ export function buildLevel1(b: Builder, m: EiffelMaterials) {
       b.bar('l1_gallery', m.iron, pos(s1, 2917), pos(s0, 2960), 4.5);
     }
 
-    // Tiang dan sabuk panel frieze lantai 1
+    // Posts and belts for Level 1 frieze band
     b.posts('l1_panels', m.iron, pos, 2960, 3011, 18, 6.5);
     b.belt('l1_panels', m.iron, pos, 2985, 1, 6.5);
     b.belt('l1_panels', m.iron, pos, 3011, 1, 7.5);
-    // Tambah silang X ganda pada setiap 18 panel frieze
+    // Dual X-cross bracing across each of the 18 frieze panels
     for (let a = 0; a < 18; a++) {
       const s0 = a / 18;
       const s1 = (a + 1) / 18;
@@ -123,15 +123,14 @@ export function buildLevel1(b: Builder, m: EiffelMaterials) {
 }
 
 /** 
- * 4 kaki terpisah antara lantai 1 dan 2 (celah di tengah). y 2457 -> 2850.
- * Sesuai permintaan: tambah 1 besi pada setiap besi yang ada agar menjadi lebih padat,
- * dan sedikit tambah ketebalannya setiap besi agar terlihat lebih berisi (hanya pada bagian ini).
+ * 4 separate leg pylons between level 1 and 2 (open central atrium). y 2457 -> 2850.
+ * Reinforced double-parallel trusses and increased chord thickness for visual density.
  */
 export function buildLegs(b: Builder, m: EiffelMaterials) {
   const levels = [2457, ...EIFFEL_LEG_BELTS, 2850];
-  const dsDiag = 0.026; // offset lateral untuk mendobel setiap batang diagonal
-  const dsPost = 0.022; // offset lateral untuk mendobel tiang tengah vertikal
-  const dyBelt = 2.4;   // offset vertikal untuk mendobel sabuk horizontal
+  const dsDiag = 0.026; // lateral offset for dual diagonal bars
+  const dsPost = 0.022; // lateral offset for dual vertical posts
+  const dyBelt = 2.4;   // vertical offset for dual horizontal belts
 
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
@@ -147,53 +146,47 @@ export function buildLegs(b: Builder, m: EiffelMaterials) {
         for (let i = 0; i < levels.length - 1; i++) {
           const yTop = levels[i];
           const yBot = levels[i + 1];
-          const n = 2; // 2 sel per bay (total 7 tingkat sabuk)
+          const n = 2; // 2 cells per bay (7 belt tiers total)
 
-          // 1. Tiang vertikal tengah: tambah 1 besi (menjadi sepasang tiang ganda paralel)
-          // Ketebalan dinaikkan dari 7.0 menjadi 9.2 agar terlihat lebih berisi
+          // 1. Central vertical post: reinforced dual parallel posts
           for (let j = 1; j < n; j++) {
             const sc = j / n;
             b.bar('leg_l1_l2', m.iron, pos(sc - dsPost, yTop), pos(sc - dsPost, yBot), 9.2);
             b.bar('leg_l1_l2', m.iron, pos(sc + dsPost, yTop), pos(sc + dsPost, yBot), 9.2);
           }
 
-          // 2. Batang diagonal X: tambah 1 besi pada SETIAP diagonal yang ada (menjadi diagonal paralel ganda X)
-          // Ketebalan dinaikkan dari 5.5 menjadi 7.2 agar terlihat lebih padat dan berisi
+          // 2. Diagonal X-bracing: reinforced dual parallel X-chords
           for (let j = 0; j < n; j++) {
             const s0 = j / n;
             const s1 = (j + 1) / n;
 
-            // Diagonal arah 1 (s0 -> s1): 2 batang besi paralel ganda
+            // Direction 1 (s0 -> s1): dual parallel bars
             b.bar('leg_l1_l2', m.iron, pos(Math.max(0, s0 - dsDiag), yTop), pos(Math.max(0, s1 - dsDiag), yBot), 7.2);
             b.bar('leg_l1_l2', m.iron, pos(Math.min(1, s0 + dsDiag), yTop), pos(Math.min(1, s1 + dsDiag), yBot), 7.2);
 
-            // Diagonal arah 2 (s1 -> s0): 2 batang besi paralel ganda
+            // Direction 2 (s1 -> s0): dual parallel bars
             b.bar('leg_l1_l2', m.iron, pos(Math.min(1, s1 + dsDiag), yTop), pos(Math.min(1, s0 + dsDiag), yBot), 7.2);
             b.bar('leg_l1_l2', m.iron, pos(Math.max(0, s1 - dsDiag), yTop), pos(Math.max(0, s0 - dsDiag), yBot), 7.2);
           }
         }
 
-        // 3. Sabuk horizontal (belts): tambah 1 besi pada setiap sabuk yang ada (menjadi balok kord ganda atas-bawah)
-        // Ketebalan dinaikkan dari 7.5 menjadi 9.5
+        // 3. Horizontal belts: reinforced multi-tier box cords
         for (let i = 1; i < levels.length; i++) {
           const y = levels[i];
           b.bar('leg_l1_l2', m.iron, pos(0, y - dyBelt), pos(1, y - dyBelt), 9.5);
           b.bar('leg_l1_l2', m.iron, pos(0, y + dyBelt), pos(1, y + dyBelt), 9.5);
-          // Tetap cantumkan sumbu referensi y agar konsisten dengan sabuk profil
           b.bar('leg_l1_l2', m.iron, pos(0, y), pos(1, y), 9.5);
         }
       }
 
-      // 4. Tiang sudut (corner pillars): tambah 1 besi penguat paralel pada setiap tiang sudut
-      // Ketebalan dinaikkan dari 14 menjadi 17.5 agar terlihat lebih padat dan berisi
+      // 4. Corner pillars: dual parallel inner reinforcing box columns
       for (const xa of [0, 1]) {
         for (const za of [0, 1]) {
           for (let i = 0; i < levels.length - 1; i++) {
             const pa1 = (y: number) => new THREE.Vector3(
               sx * (xa ? legOuter(y) : legInner(y)), GY - y, sz * (za ? legOuter(y) : legInner(y)));
-            // Tiang sudut utama
             b.bar('leg_corner', m.iron, pa1(levels[i]), pa1(levels[i + 1]), 17.5);
-            // Tambah 1 besi paralel penguat kolom sudut bagian dalam
+
             const pa2 = (y: number) => new THREE.Vector3(
               sx * (xa ? legOuter(y) - 5.5 : legInner(y) + 5.5), GY - y, sz * (za ? legOuter(y) - 5.5 : legInner(y) + 5.5));
             b.bar('leg_corner', m.iron, pa2(levels[i]), pa2(levels[i + 1]), 13.5);

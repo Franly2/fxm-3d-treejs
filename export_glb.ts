@@ -81,9 +81,7 @@ const exporter = new GLTFExporter();
 const baseDir = import.meta.dirname || path.resolve('.');
 
 const EXPORT_DIRS = [
-  path.resolve(baseDir, '..', 'exports'),
   path.resolve(baseDir, 'public', 'models'),
-  path.resolve(baseDir),
 ];
 
 for (const dir of EXPORT_DIRS) {
@@ -158,42 +156,42 @@ async function exportModel(names: string[], root: THREE.Object3D) {
 }
 
 async function main() {
-  console.log('--- EXPORTING OPTIMIZED MODELS FOR CONSTRUCT 3 (.GLB) ---');
+  console.log('--- EXPORTING OPTIMIZED 3D MODELS (.GLB) ---');
 
-  // 1. Mobil Balap (Race Car)
+  // 1. Race Car
   const car = createRaceCarModel();
-  await exportModel(['mobil', 'raceCar', 'car'], car.root);
+  await exportModel(['car'], car.root);
 
-  // 2. Koin Jalanan (Coin Pickup)
+  // 2. Coin Pickup
   const coin = createCoinModel();
-  await exportModel(['koin', 'coin'], coin.root);
+  await exportModel(['coin'], coin.root);
 
-  // 3. Jebakan TNT (TNT Trap)
+  // 3. TNT Trap
   const tnt = createTntModel();
-  await exportModel(['tnt', 'tntTrap'], tnt.root);
+  await exportModel(['tnt'], tnt.root);
 
-  // 4. Segmen Jalanan (Road Track Segment)
+  // 4. Road Track Segment
   const road = createRoadModel(3.2, 1.65);
-  await exportModel(['jalan', 'roadSegment', 'road'], road.root);
+  await exportModel(['road'], road.root);
 
-  // 5. Jet Tempur MiG-23 (Fighter Jet)
+  // 5. Fighter Jet (MiG-23)
   const jet = createJetModel();
-  await exportModel(['jet', 'mig23'], jet.root);
+  await exportModel(['jet'], jet.root);
 
-  // 6. Basílica de la Sagrada Família (Antoni Gaudí)
+  // 6. Sagrada Familia (Antoni Gaudi)
   const sagrada = createSagradaModel();
-  await exportModel(['sagrada', 'sagradaFamilia'], sagrada.root);
+  await exportModel(['sagrada'], sagrada.root);
 
-  // 7. Paris (Menara Eiffel, Sungai Seine, Jembatan & Bateau-Mouche)
+  // 7. Paris Eiffel Tower, Seine River & Bridge
   // const paris = createParisModel();
-  // await exportModel(['paris', 'eiffelParis'], paris.root);
+  // await exportModel(['paris'], paris.root);
 
-  // 8. Kipas Retro (Retro Desk Fan)
+  // 8. Retro Desk Fan
   const fan = createFanModel();
-  await exportModel(['fan', 'retroFan', 'retro_fan'], fan.root);
+  await exportModel(['fan'], fan.root);
 
   console.log('--------------------------------------------------');
-  console.log('SEMUA MODEL OPTIMAL BERHASIL DI-EXPORT KE .GLB!');
+  console.log('ALL OPTIMIZED MODELS SUCCESSFULLY EXPORTED TO .GLB');
 }
 
 main().catch(console.error);

@@ -8,18 +8,18 @@ export type { EiffelMaterials, EiffelBar };
 export { EIFFEL_SCALE };
 
 export interface EiffelTower {
-  /** Grup menara; origin = tengah alas di tanah, sudah diskalakan EIFFEL_SCALE. */
+  /** Tower group; origin = ground center datum, scaled by EIFFEL_SCALE. */
   group: THREE.Group;
   beaconGroup: THREE.Group;
-  /** Garis referensi (piksel gambar) untuk verify_eiffel. */
+  /** Reference bars (image pixels) for alignment verification. */
   bars: EiffelBar[];
-  /** Jumlah komponen per bagian. */
+  /** Component counts per structural part. */
   counts: Record<string, number>;
 }
 
 /**
- * Menara Eiffel hasil rekonstruksi eiffel-tower24k.jpg. Geometri dibangun dalam piksel gambar,
- * digabung per material, lalu diskalakan. Sisi tak terlihat dibuat simetris 4 arah.
+ * Procedural Eiffel Tower model reconstructed from photographic blueprints.
+ * Merged per material and symmetrically built across all 4 facades.
  */
 export function buildEiffelTower(m: EiffelMaterials): EiffelTower {
   const b = new Builder();
@@ -34,7 +34,7 @@ export function buildEiffelTower(m: EiffelMaterials): EiffelTower {
   buildSummit(b, m);
   b.build(group);
 
-  // Lampu suar berputar di dasar antena
+  // Rotating summit beacon light at the base of antenna mast
   const beaconGroup = new THREE.Group();
   beaconGroup.name = 'EiffelBeaconPivot';
   beaconGroup.position.set(0, GY - 505, 0);

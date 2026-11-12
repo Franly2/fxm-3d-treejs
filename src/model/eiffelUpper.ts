@@ -50,10 +50,9 @@ export function buildLevel2(b: Builder, m: EiffelMaterials) {
 }
 
 /** 
- * Batang menara: 17 sabuk, 16 tingkat + 1 tingkat pendek, platform antara. y 770 -> 2234.
- * Pada bagian batang bawah (lantai 2 -> platform antara, y 1416 -> 2234):
- * Sesuai permintaan user: tambah 1 besi pada setiap besi yang ada agar menjadi lebih padat,
- * dan sedikit tambah ketebalannya setiap besi agar terlihat lebih berisi (hanya pada bagian ini).
+ * Tower shaft: 17 belts, 16 bays + 1 short bay, intermediate platform. y 770 -> 2234.
+ * Lower shaft section (level 2 -> intermediate platform, y 1416 -> 2234):
+ * Reinforced lattice density with dual parallel cords and increased bar thickness.
  */
 export function buildShaft(b: Builder, m: EiffelMaterials) {
   const levels = [...EIFFEL_SHAFT_BELTS, EIFFEL_DECK2_TOP];
@@ -70,44 +69,43 @@ export function buildShaft(b: Builder, m: EiffelMaterials) {
     for (let i = 0; i < levels.length - 1; i++) {
       const yTop = levels[i];
       const yBot = levels[i + 1];
-      const isLowerShaft = yTop >= 1416; // Bagian batang bawah yang dikirim oleh user
+      const isLowerShaft = yTop >= 1416;
 
       if (isLowerShaft) {
-        // Bagian yang dikirim user: tambah 1 besi pada setiap besi yang ada & tambah ketebalan
-        const n = 2; // 2 panel per bay dengan tiang tengah
+        // Reinforced lower shaft section
+        const n = 2; // 2 panels per bay with central post
 
-        // Tiang tengah: tambah 1 besi penguat (sepasang tiang ganda paralel), tebal 9.2 (sebelumnya 7.0)
+        // Central post: reinforced dual parallel posts (thickness 9.2)
         for (let j = 1; j < n; j++) {
           const sc = j / n;
           b.bar('shaft', m.iron, pos(sc - dsPost, yTop), pos(sc - dsPost, yBot), 9.2);
           b.bar('shaft', m.iron, pos(sc + dsPost, yTop), pos(sc + dsPost, yBot), 9.2);
         }
 
-        // Batang diagonal X: tambah 1 besi pada SETIAP diagonal yang ada (menjadi sepasang diagonal paralel ganda X)
-        // Ketebalan dinaikkan dari 5.2 menjadi 7.2 agar terlihat lebih berisi
+        // Diagonal X-chords: reinforced dual parallel diagonals (thickness 7.2)
         for (let j = 0; j < n; j++) {
           const s0 = j / n;
           const s1 = (j + 1) / n;
 
-          // Diagonal 1 (s0 -> s1): 2 batang besi paralel ganda
+          // Diagonal 1 (s0 -> s1): dual parallel bars
           b.bar('shaft', m.iron, pos(Math.max(0, s0 - dsDiag), yTop), pos(Math.max(0, s1 - dsDiag), yBot), 7.2);
           b.bar('shaft', m.iron, pos(Math.min(1, s0 + dsDiag), yTop), pos(Math.min(1, s1 + dsDiag), yBot), 7.2);
 
-          // Diagonal 2 (s1 -> s0): 2 batang besi paralel ganda
+          // Diagonal 2 (s1 -> s0): dual parallel bars
           b.bar('shaft', m.iron, pos(Math.min(1, s1 + dsDiag), yTop), pos(Math.min(1, s0 + dsDiag), yBot), 7.2);
           b.bar('shaft', m.iron, pos(Math.max(0, s1 - dsDiag), yTop), pos(Math.max(0, s0 - dsDiag), yBot), 7.2);
         }
       } else {
-        // Bagian atas di luar yang dikirim: tetap standar
+        // Upper shaft section: standard lattice
         const n = i < EIFFEL_SHAFT_SINGLE_POST_TIERS ? 2 : 3;
         b.lattice('shaft', m.iron, pos, yTop, yBot, n, 7.0, 5.2);
       }
     }
 
-    // Sabuk horizontal
+    // Horizontal belts
     for (const y of EIFFEL_SHAFT_BELTS) {
       if (y >= 1416) {
-        // Bagian yang dikirim user: tambah 1 besi pada sabuk (kord ganda) & tambah ketebalan dari 8.0 menjadi 9.8
+        // Reinforced multi-tier horizontal belt
         b.bar('shaft_belts', m.iron, pos(0, y - dyBelt), pos(1, y - dyBelt), 9.8);
         b.bar('shaft_belts', m.iron, pos(0, y + dyBelt), pos(1, y + dyBelt), 9.8);
         b.bar('shaft_belts', m.iron, pos(0, y), pos(1, y), 9.8);
@@ -117,7 +115,7 @@ export function buildShaft(b: Builder, m: EiffelMaterials) {
     }
   }
 
-  // Tiang sudut (corner pillars)
+  // Corner pillars
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
       for (let i = 0; i < levels.length - 1; i++) {
@@ -126,10 +124,10 @@ export function buildShaft(b: Builder, m: EiffelMaterials) {
         const isLowerShaft = levels[i] >= 1416;
 
         if (isLowerShaft) {
-          // Kolom sudut utama lebih tebal (17.5 vs 14)
+          // Reinforced main corner pillar (17.5 vs 14)
           b.bar('shaft_corner', m.iron, new THREE.Vector3(sx * w0, GY - levels[i], sz * w0),
             new THREE.Vector3(sx * w1, GY - levels[i + 1], sz * w1), 17.5);
-          // Tambah 1 besi paralel penguat kolom sudut bagian dalam
+          // Inner reinforcing column
           const iw0 = w0 - 5.0;
           const iw1 = w1 - 5.0;
           b.bar('shaft_corner', m.iron, new THREE.Vector3(sx * iw0, GY - levels[i], sz * iw0),
@@ -156,7 +154,7 @@ export function buildSummit(b: Builder, m: EiffelMaterials) {
     };
     b.posts('neck', m.iron, neck, 680, 770, 4, 6.0);
     for (const y of [770, 762, 742, 680]) b.belt('neck', m.iron, neck, y, 1, 7.0);
-    // Tambah silang X ganda pada tiang leher bagian bawah
+    // Dual X-cross bracing across lower neck posts
     for (let j = 0; j < 4; j++) {
       const s0 = j / 4;
       const s1 = (j + 1) / 4;
