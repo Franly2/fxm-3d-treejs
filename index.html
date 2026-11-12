@@ -1,131 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>3D Interactive Showcase - Procedural Models & Reference Gallery</title>
-    <link rel="stylesheet" href="./src/style.css" />
-  </head>
-  <body>
-    <div id="app"></div>
 
-    <!-- Floating UI Overlay -->
-    <div id="ui-overlay">
-      <button id="toggle-ui" class="toggle-ui-btn" title="Toggle UI">_</button>
-      <div id="ui-content">
-        <!-- Model Selection Tabs -->
-        <div class="section-title">Select 3D Model:</div>
-        <div class="model-tabs">
-          <button class="tab-btn active" data-mode="paris">Paris (Eiffel Tower)</button>
-          <button class="tab-btn" data-mode="sagrada">Sagrada Familia</button>
-          <button class="tab-btn" data-mode="jet">Fighter Jet (MiG-23)</button>
-          <button class="tab-btn" data-mode="fan">Retro Desk Fan</button>
-          <button class="tab-btn" data-mode="chair">Red Armchair</button>
-          <button class="tab-btn" data-mode="car">Race Car</button>
-          <button class="tab-btn" data-mode="coin">Coin</button>
-          <button class="tab-btn" data-mode="tnt">TNT</button>
-          <button class="tab-btn" data-mode="showcase">All Game Assets</button>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Showcase</title>
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+
+<body>
+  <div id="app"></div>
+
+  <!-- Floating UI Overlay -->
+  <div id="ui-overlay">
+    <button id="toggle-ui" class="toggle-ui-btn" title="Toggle UI">_</button>
+    <div id="ui-content">
+      <!-- Model Selection Tabs -->
+      <div class="section-title">Select 3D Model:</div>
+      <div class="model-tabs">
+        <button class="tab-btn active" data-mode="paris">Paris (Eiffel Tower)</button>
+        <button class="tab-btn" data-mode="sagrada">Sagrada Familia</button>
+        <button class="tab-btn" data-mode="jet">Fighter Jet (MiG-23)</button>
+        <button class="tab-btn" data-mode="fan">Retro Desk Fan</button>
+        <button class="tab-btn" data-mode="chair">Red Armchair</button>
+        <button class="tab-btn" data-mode="car">Race Car</button>
+        <button class="tab-btn" data-mode="coin">Coin</button>
+        <button class="tab-btn" data-mode="tnt">TNT</button>
+        <button class="tab-btn" data-mode="showcase">All Game Assets</button>
+      </div>
+
+      <!-- Reference Photos Action Button (no emojis) -->
+      <div class="action-bar">
+        <button id="btn-open-refs" class="ref-action-btn"
+          title="View reference photos and blueprints used for this model">
+          <span class="btn-text">Reference Photos & Blueprints</span>
+          <span class="btn-badge">View Sources</span>
+        </button>
+        <button id="btn-toggle-rotate" class="rotate-action-btn" title="Toggle Auto Rotate 360°">
+          <span class="btn-text">Auto Rotate</span>
+          <span class="btn-status" id="rotate-status">OFF</span>
+        </button>
+      </div>
+
+      <!-- Camera Views -->
+      <div id="jet-view-bar" class="view-bar">
+        <span class="export-title">Camera View:</span>
+        <div class="view-buttons">
+          <button class="view-btn" data-view="photo">Photo View</button>
+          <button class="view-btn" data-view="trocadero">Trocadéro View</button>
+          <button class="view-btn" data-view="trocadero_pov">Trocadéro POV (Checkered Floor)</button>
+          <button class="view-btn" data-view="under">Under Tower (Bridge)</button>
+          <button class="view-btn" data-view="aerial">Aerial Panorama</button>
+          <button class="view-btn" data-view="champ">Champ de Mars</button>
+          <button class="view-btn active" data-view="tower">Eiffel Tower</button>
+          <button class="view-btn" data-view="spire">Spire & Summit</button>
+          <button class="view-btn" data-view="boat">River & Boat</button>
+          <button class="view-btn" data-view="top">Top View</button>
         </div>
+      </div>
 
-        <!-- Reference Photos Action Button (no emojis) -->
-        <div class="action-bar">
-          <button id="btn-open-refs" class="ref-action-btn" title="View reference photos and blueprints used for this model">
-            <span class="btn-text">Reference Photos & Blueprints</span>
-            <span class="btn-badge">View Sources</span>
-          </button>
-          <button id="btn-toggle-rotate" class="rotate-action-btn" title="Toggle Auto Rotate 360°">
-            <span class="btn-text">Auto Rotate</span>
-            <span class="btn-status" id="rotate-status">OFF</span>
-          </button>
-        </div>
-
-        <!-- Camera Views -->
-        <div id="jet-view-bar" class="view-bar">
-          <span class="export-title">Camera View:</span>
-          <div class="view-buttons">
-            <button class="view-btn" data-view="photo">Photo View</button>
-            <button class="view-btn" data-view="trocadero">Trocadéro View</button>
-            <button class="view-btn" data-view="trocadero_pov">Trocadéro POV (Checkered Floor)</button>
-            <button class="view-btn" data-view="under">Under Tower (Bridge)</button>
-            <button class="view-btn" data-view="aerial">Aerial Panorama</button>
-            <button class="view-btn" data-view="champ">Champ de Mars</button>
-            <button class="view-btn active" data-view="tower">Eiffel Tower</button>
-            <button class="view-btn" data-view="spire">Spire & Summit</button>
-            <button class="view-btn" data-view="boat">River & Boat</button>
-            <button class="view-btn" data-view="top">Top View</button>
-          </div>
-        </div>
-
-        <!-- 3D Model GLB Downloads -->
-        <div class="export-bar">
-          <span class="export-title">Download 3D Models (.GLB):</span>
-          <div class="export-links">
-            <a class="export-btn" href="./models/fan.glb" download="fan.glb">fan.glb</a>
-            <a class="export-btn" href="./models/paris.glb" download="paris.glb">paris.glb</a>
-            <a class="export-btn" href="./models/sagrada.glb" download="sagrada.glb">sagrada.glb</a>
-            <a class="export-btn" href="./models/jet.glb" download="jet.glb">jet.glb</a>
-            <a class="export-btn" href="./models/car.glb" download="car.glb">car.glb</a>
-            <a class="export-btn" href="./models/road.glb" download="road.glb">road.glb</a>
-            <a class="export-btn" href="./models/coin.glb" download="coin.glb">coin.glb</a>
-            <a class="export-btn" href="./models/tnt.glb" download="tnt.glb">tnt.glb</a>
-          </div>
+      <!-- 3D Model GLB Downloads -->
+      <div class="export-bar">
+        <span class="export-title">Download 3D Models (.GLB):</span>
+        <div class="export-links">
+          <a class="export-btn" href="./models/fan.glb" download="fan.glb">fan.glb</a>
+          <a class="export-btn" href="./models/paris.glb" download="paris.glb">paris.glb</a>
+          <a class="export-btn" href="./models/sagrada.glb" download="sagrada.glb">sagrada.glb</a>
+          <a class="export-btn" href="./models/jet.glb" download="jet.glb">jet.glb</a>
+          <a class="export-btn" href="./models/car.glb" download="car.glb">car.glb</a>
+          <a class="export-btn" href="./models/road.glb" download="road.glb">road.glb</a>
+          <a class="export-btn" href="./models/coin.glb" download="coin.glb">coin.glb</a>
+          <a class="export-btn" href="./models/tnt.glb" download="tnt.glb">tnt.glb</a>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- 3D World Anchored Hover Tooltip -->
-    <div id="tnt-world-tooltip" class="tnt-world-tooltip hidden">
-      <div class="tnt-tooltip-pill">
-        <span class="tnt-tooltip-pulse"></span>
-        <span class="tnt-tooltip-text">Click to Detonate</span>
-      </div>
-      <div class="tnt-tooltip-stem"></div>
+  <!-- 3D World Anchored Hover Tooltip -->
+  <div id="tnt-world-tooltip" class="tnt-world-tooltip hidden">
+    <div class="tnt-tooltip-pill">
+      <span class="tnt-tooltip-pulse"></span>
+      <span class="tnt-tooltip-text">Click to Detonate</span>
     </div>
+    <div class="tnt-tooltip-stem"></div>
+  </div>
 
-    <!-- Reference Photos Modal (no badges, no summary, no emojis) -->
-    <div id="ref-modal" class="ref-modal hidden" aria-hidden="true" role="dialog" aria-labelledby="ref-modal-title">
-      <div class="ref-modal-backdrop" id="ref-modal-backdrop"></div>
-      <div class="ref-modal-dialog">
-        <div class="ref-modal-header">
-          <div class="ref-modal-header-info">
-            <h2 id="ref-modal-title">Reference Photos: Paris (Eiffel Tower)</h2>
+  <!-- Reference Photos Modal (no badges, no summary, no emojis) -->
+  <div id="ref-modal" class="ref-modal hidden" aria-hidden="true" role="dialog" aria-labelledby="ref-modal-title">
+    <div class="ref-modal-backdrop" id="ref-modal-backdrop"></div>
+    <div class="ref-modal-dialog">
+      <div class="ref-modal-header">
+        <div class="ref-modal-header-info">
+          <h2 id="ref-modal-title">Reference Photos: Paris (Eiffel Tower)</h2>
+        </div>
+        <button id="ref-modal-close" class="ref-modal-close-btn" aria-label="Close reference gallery"
+          title="Close (Esc)">✕</button>
+      </div>
+
+      <!-- Modal Model Tabs (no emojis) -->
+      <div class="ref-model-nav" id="ref-model-nav">
+        <button class="ref-nav-btn active" data-model="paris">Eiffel Tower</button>
+        <button class="ref-nav-btn" data-model="sagrada">Sagrada Família</button>
+        <button class="ref-nav-btn" data-model="jet">MiG-23 Fighter Jet</button>
+        <button class="ref-nav-btn" data-model="fan">Retro Desk Fan</button>
+        <button class="ref-nav-btn" data-model="chair">Red Armchair</button>
+      </div>
+
+      <div class="ref-modal-content">
+        <!-- Sidebar: Reference Cards List -->
+        <div class="ref-sidebar" id="ref-sidebar"></div>
+
+        <!-- Preview Area -->
+        <div class="ref-preview-area">
+          <div class="ref-preview-image-container">
+            <img id="ref-preview-img" src="" alt="Reference Preview" />
           </div>
-          <button id="ref-modal-close" class="ref-modal-close-btn" aria-label="Close reference gallery" title="Close (Esc)">✕</button>
-        </div>
-
-        <!-- Modal Model Tabs (no emojis) -->
-        <div class="ref-model-nav" id="ref-model-nav">
-          <button class="ref-nav-btn active" data-model="paris">Eiffel Tower</button>
-          <button class="ref-nav-btn" data-model="sagrada">Sagrada Família</button>
-          <button class="ref-nav-btn" data-model="jet">MiG-23 Fighter Jet</button>
-          <button class="ref-nav-btn" data-model="fan">Retro Desk Fan</button>
-          <button class="ref-nav-btn" data-model="chair">Red Armchair</button>
-        </div>
-
-        <div class="ref-modal-content">
-          <!-- Sidebar: Reference Cards List -->
-          <div class="ref-sidebar" id="ref-sidebar"></div>
-
-          <!-- Preview Area -->
-          <div class="ref-preview-area">
-            <div class="ref-preview-image-container">
-              <img id="ref-preview-img" src="" alt="Reference Preview" />
-            </div>
-            <div class="ref-preview-details">
-              <div class="ref-preview-details-top">
-                <div class="ref-preview-headings">
-                  <h3 id="ref-preview-title">1</h3>
-                </div>
-                <a id="ref-preview-open-full" href="#" target="_blank" rel="noopener noreferrer" class="ref-btn-open-full">
-                  ↗ Open Full Resolution
-                </a>
+          <div class="ref-preview-details">
+            <div class="ref-preview-details-top">
+              <div class="ref-preview-headings">
+                <h3 id="ref-preview-title">1</h3>
               </div>
+              <a id="ref-preview-open-full" href="#" target="_blank" rel="noopener noreferrer"
+                class="ref-btn-open-full">
+                ↗ Open Full Resolution
+              </a>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>
