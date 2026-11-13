@@ -1,3 +1,7 @@
+import '@fontsource/ibm-plex-sans/latin-400.css';
+import '@fontsource/ibm-plex-sans/latin-500.css';
+import '@fontsource/ibm-plex-sans/latin-600.css';
+import '@fontsource/ibm-plex-mono/latin-400.css';
 import './style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -10,6 +14,8 @@ import { createJetModel } from './model/jetModel';
 import { createSagradaModel } from './model/sagradaModel';
 import { createParisModel } from './model/parisModel';
 import { createFanModel } from './model/fanModel';
+import { mergeStaticMeshes } from './optimize';
+import { createSkyBackdropTexture, createSkyEnvironment } from './skyLighting';
 import { REFERENCES_DATA, type ReferenceItem } from './referencesData';
 
 let tabButtons: NodeListOf<HTMLButtonElement>;
@@ -80,9 +86,10 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 // 3. WebGL Renderer
+const MAX_PIXEL_RATIO = 1.5;
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -96,12 +103,21 @@ controls.maxPolarAngle = Math.PI / 2 - 0.02;
 controls.minDistance = 0.5;
 controls.maxDistance = 8;
 
-// 5. Lighting Setup
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.72);
+// 5. Lighting Setup (Sky + Sun/Moon + IBL Environment)
+const sunEnvTexture = createSkyEnvironment(renderer, 'sun');
+const moonEnvTexture = createSkyEnvironment(renderer, 'moon');
+const sunSkyBackdrop = createSkyBackdropTexture('sun');
+const moonSkyBackdrop = createSkyBackdropTexture('moon');
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.18);
 scene.add(ambientLight);
 
-const sunLight = new THREE.DirectionalLight(0xfff8ee, 2.1);
-sunLight.position.set(2.2, 4.5, 3.2);
+const hemiLight = new THREE.HemisphereLight(0xcde6ff, 0xd8cfc4, 0.95);
+hemiLight.position.set(0, 10, 0);
+scene.add(hemiLight);
+
+const sunLight = new THREE.DirectionalLight(0xfff3de, 2.55);
+sunLight.position.set(2.8, 5.4, 3.4);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width = 2048;
 sunLight.shadow.mapSize.height = 2048;
@@ -114,12 +130,12 @@ sunLight.shadow.camera.bottom = -2.2;
 sunLight.shadow.bias = -0.0005;
 scene.add(sunLight);
 
-const fillLight = new THREE.DirectionalLight(0xbad2e8, 0.85);
-fillLight.position.set(-2.5, 2.2, -2.0);
+const fillLight = new THREE.DirectionalLight(0x94c2f5, 0.75);
+fillLight.position.set(-2.8, 2.6, -2.2);
 scene.add(fillLight);
 
-const rimLight = new THREE.DirectionalLight(0xffffff, 0.65);
-rimLight.position.set(0, 2.4, -3.2);
+const rimLight = new THREE.DirectionalLight(0xffe4b5, 0.85);
+rimLight.position.set(-0.4, 3.0, -3.4);
 scene.add(rimLight);
 
 // 6. Ground Shadow Receiver & Grid
@@ -131,7 +147,7 @@ ground.position.y = 0;
 ground.receiveShadow = true;
 scene.add(ground);
 
-const gridHelper = new THREE.GridHelper(6, 30, 0xcccccc, 0xe2e2e5);
+let gridHelper = new THREE.GridHelper(6, 30, 0xcccccc, 0xe2e2e5);
 gridHelper.position.y = 0.001;
 scene.add(gridHelper);
 
@@ -159,12 +175,15 @@ const roadTrack = road.root;
 scene.add(roadTrack);
 
 const jet = createJetModel();
+mergeStaticMeshes(jet.root, [jet.pivots.leftWing, jet.pivots.rightWing, jet.pivots.ventralFin]);
 scene.add(jet.root);
 
 const sagrada = createSagradaModel();
+mergeStaticMeshes(sagrada.root);
 scene.add(sagrada.root);
 
 const paris = createParisModel();
+mergeStaticMeshes(paris.root, Object.values(paris.pivots));
 scene.add(paris.root);
 
 const fan = createFanModel();
@@ -371,7 +390,111 @@ function setCameraView(view: string) {
   controls.update();
 }
 
-// 9. Mode Switching Logic
+// 9. Theme & Atmosphere
+
+// Models without moving geometry render their shadow map once instead of every frame.
+const STATIC_SHADOW_MODES: ReadonlySet<ViewMode> = new Set(['paris', 'sagrada', 'jet', 'chair']);
+type Theme = 'light' | 'dark';
+const THEME_KEY = 'showcase-theme';
+let theme: Theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+
+const nightParisColor = new THREE.Color(0x0a1224);
+const nightParisFog = new THREE.FogExp2(0x0a1224, 0.014);
+
+function rebuildGrid() {
+  const visible = gridHelper.visible;
+  scene.remove(gridHelper);
+  gridHelper.geometry.dispose();
+  (gridHelper.material as THREE.Material).dispose();
+  gridHelper = theme === 'dark'
+    ? new THREE.GridHelper(6, 30, 0x3a4152, 0x232938)
+    : new THREE.GridHelper(6, 30, 0xcccccc, 0xe2e2e5);
+  gridHelper.position.y = 0.001;
+  gridHelper.visible = visible;
+  scene.add(gridHelper);
+}
+
+/** Resets lights, sky and fog for the given mode, adjusted for the active theme. */
+function applyAtmosphere(mode: ViewMode) {
+  const dark = theme === 'dark';
+
+  defaultBgColor.set(dark ? 0x0d1629 : 0xedf2f7);
+  defaultFog.color.set(dark ? 0x0f1a30 : 0xedf2f7);
+  groundMat.opacity = dark ? 0.48 : 0.18;
+
+  scene.background = dark ? moonSkyBackdrop : sunSkyBackdrop;
+  scene.environment = dark ? moonEnvTexture : sunEnvTexture;
+  scene.environmentIntensity = dark ? 0.95 : 0.85;
+  scene.fog = defaultFog;
+
+  hemiLight.color.set(dark ? 0x7ea6f0 : 0xcde6ff);
+  hemiLight.groundColor.set(dark ? 0x162033 : 0xd8cfc4);
+  hemiLight.intensity = dark ? 0.85 : 0.95;
+
+  sunLight.position.set(2.8, 5.4, 3.4);
+  sunLight.color.set(dark ? 0xd2e4ff : 0xfff3de);
+  sunLight.intensity = dark ? 2.1 : 2.55;
+
+  fillLight.position.set(-2.8, 2.6, -2.2);
+  fillLight.color.set(dark ? 0x5a80cc : 0x94c2f5);
+  fillLight.intensity = dark ? 0.75 : 0.75;
+
+  rimLight.position.set(-0.4, 3.0, -3.4);
+  rimLight.color.set(dark ? 0xe0edff : 0xffe4b5);
+  rimLight.intensity = dark ? 1.35 : 0.85;
+
+  ambientLight.color.set(dark ? 0x9db8ff : 0xffffff);
+  ambientLight.intensity = dark ? 0.16 : 0.18;
+  renderer.toneMappingExposure = dark ? 1.08 : 1.12;
+
+  if (mode === 'paris') {
+    if (dark) {
+      scene.background = moonSkyBackdrop;
+      scene.fog = nightParisFog;
+      scene.environmentIntensity = 0.9;
+      hemiLight.intensity = 0.8;
+      sunLight.position.set(3.5, 6.2, 4.2);
+      sunLight.color.set('#cfe0ff');
+      sunLight.intensity = 1.85;
+      fillLight.position.set(-3.2, 3.5, -2.5);
+      fillLight.color.set('#5a7cc8');
+      fillLight.intensity = 0.75;
+      rimLight.position.set(0.5, 3.0, -3.8);
+      rimLight.color.set('#ffd9a0');
+      rimLight.intensity = 1.15;
+      ambientLight.intensity = 0.15;
+      renderer.toneMappingExposure = 1.06;
+    } else {
+      scene.background = parisSkyTexture;
+      scene.fog = parisFog;
+      scene.environmentIntensity = 0.9;
+      hemiLight.intensity = 1.0;
+      sunLight.position.set(3.5, 6.2, 4.2);
+      sunLight.color.set('#fff5e4');
+      sunLight.intensity = 2.9;
+      fillLight.position.set(-3.2, 3.5, -2.5);
+      fillLight.color.set('#96c4f2');
+      fillLight.intensity = 0.95;
+      rimLight.position.set(0.5, 3.0, -3.8);
+      rimLight.color.set('#fde68a');
+      rimLight.intensity = 0.85;
+      ambientLight.intensity = 0.18;
+      renderer.toneMappingExposure = 1.15;
+    }
+  }
+}
+
+function setTheme(next: Theme, persist = true) {
+  theme = next;
+  document.documentElement.dataset.theme = next;
+  if (persist) {
+    try { localStorage.setItem(THEME_KEY, next); } catch { /* storage unavailable */ }
+  }
+  rebuildGrid();
+  applyAtmosphere(currentMode);
+}
+
+// 10. Mode Switching Logic
 function setViewMode(mode: ViewMode) {
   currentMode = mode;
 
@@ -419,40 +542,12 @@ function setViewMode(mode: ViewMode) {
   gridHelper.visible = mode !== 'paris' && mode !== 'sagrada';
   ground.visible = mode !== 'paris' && mode !== 'sagrada';
 
-  // Default lighting & atmosphere reset
-  scene.background = defaultBgColor;
-  scene.fog = defaultFog;
-  sunLight.position.set(2.2, 4.5, 3.2);
-  sunLight.color.set(0xfff8ee);
-  sunLight.intensity = 2.1;
-  fillLight.position.set(-2.5, 2.2, -2.0);
-  fillLight.color.set(0xbad2e8);
-  fillLight.intensity = 0.85;
-  rimLight.position.set(0, 2.4, -3.2);
-  rimLight.color.set(0xffffff);
-  rimLight.intensity = 0.65;
-  ambientLight.color.set(0xffffff);
-  ambientLight.intensity = 0.72;
-  renderer.toneMappingExposure = 1.1;
+  applyAtmosphere(mode);
+  renderer.shadowMap.autoUpdate = !STATIC_SHADOW_MODES.has(mode);
+  renderer.shadowMap.needsUpdate = true;
 
   if (mode === 'paris') {
     paris.root.visible = true;
-
-    // Photorealistic Parisian sky atmosphere and warm golden sunlight
-    scene.background = parisSkyTexture;
-    scene.fog = parisFog;
-    sunLight.position.set(3.5, 6.0, 4.2);
-    sunLight.color.set('#fff6ea');
-    sunLight.intensity = 2.85;
-    fillLight.position.set(-3.2, 3.5, -2.5);
-    fillLight.color.set('#9cc8f2');
-    fillLight.intensity = 1.05;
-    rimLight.position.set(0.5, 2.8, -3.8);
-    rimLight.color.set('#fde68a');
-    rimLight.intensity = 0.75;
-    ambientLight.color.set('#ffffff');
-    ambientLight.intensity = 0.58;
-    renderer.toneMappingExposure = 1.15;
 
     // Update view button labels for Paris
     const parisViews = [
@@ -832,11 +927,25 @@ function initDOM() {
       controls.autoRotate = !controls.autoRotate;
       controls.autoRotateSpeed = 1.6;
       btnToggleRotate.classList.toggle('active', controls.autoRotate);
+      btnToggleRotate.setAttribute('aria-checked', String(controls.autoRotate));
       if (rotateStatus) {
         rotateStatus.textContent = controls.autoRotate ? 'ON' : 'OFF';
       }
     });
   }
+
+  const themeButtons = document.querySelectorAll<HTMLButtonElement>('[data-theme-value]');
+  const syncThemeButtons = () => {
+    themeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.themeValue === theme)));
+  };
+  themeButtons.forEach((b) => {
+    b.addEventListener('click', () => {
+      setTheme(b.dataset.themeValue === 'dark' ? 'dark' : 'light');
+      syncThemeButtons();
+    });
+  });
+  if (theme === 'dark') rebuildGrid();
+  syncThemeButtons();
 
   if (modalClose) {
     modalClose.addEventListener('click', () => {
@@ -1005,6 +1114,7 @@ function initDOM() {
   (window as any).camera = camera;
   (window as any).tntTrap = tntTrap;
   (window as any).fan = fan;
+  (window as any).__renderer = renderer;
   (window as any).triggerTntExplosion = () => tntTrap.triggerExplosion();
 
   // Check URL query parameter (?model=paris|sagrada|jet|showcase|car|coin|tnt|chair)
@@ -1015,11 +1125,14 @@ function initDOM() {
   if (toggleBtn && overlay) {
     toggleBtn.addEventListener('click', () => {
       overlay.classList.toggle('collapsed');
-      toggleBtn.textContent = overlay.classList.contains('collapsed') ? '⚙' : '_';
     });
     if (params.get('ui') === 'hide') {
       overlay.classList.add('collapsed');
-      toggleBtn.textContent = '⚙';
+    }
+    const themeParam = params.get('theme');
+    if (themeParam === 'dark' || themeParam === 'light') {
+      setTheme(themeParam, false);
+      syncThemeButtons();
     }
   }
 
@@ -1101,5 +1214,5 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
 });

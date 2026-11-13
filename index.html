@@ -1,80 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>3D Showcase</title>
   <link rel="stylesheet" href="./src/style.css" />
+    <link rel="stylesheet" href="./src/hud.css" />
+    <script>
+      try {
+        var t = localStorage.getItem('showcase-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
 </head>
 
 <body>
   <div id="app"></div>
 
-  <!-- Floating UI Overlay -->
-  <div id="ui-overlay">
-    <button id="toggle-ui" class="toggle-ui-btn" title="Toggle UI">_</button>
+    <!-- Control panel -->
+  <aside id="ui-overlay" aria-label="Viewer controls">
+    <header class="panel-header">
+      <h1 class="panel-title">3D Showcase</h1>
+      <button id="toggle-ui" class="panel-collapse" type="button" aria-label="Collapse panel" title="Collapse panel">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+      </button>
+    </header>
+
     <div id="ui-content">
-      <!-- Model Selection Tabs -->
-      <div class="section-title">Select 3D Model:</div>
-      <div class="model-tabs">
-        <button class="tab-btn active" data-mode="paris">Paris (Eiffel Tower)</button>
-        <button class="tab-btn" data-mode="sagrada">Sagrada Familia</button>
-        <button class="tab-btn" data-mode="jet">Fighter Jet (MiG-23)</button>
-        <button class="tab-btn" data-mode="fan">Retro Desk Fan</button>
-        <button class="tab-btn" data-mode="chair">Red Armchair</button>
-        <button class="tab-btn" data-mode="car">Race Car</button>
-        <button class="tab-btn" data-mode="coin">Coin</button>
-        <button class="tab-btn" data-mode="tnt">TNT</button>
-        <button class="tab-btn" data-mode="showcase">All Game Assets</button>
-      </div>
+      <section class="panel-section">
+        <h2 class="section-label">Model</h2>
+        <div class="model-tabs" role="list">
+          <button class="tab-btn active" data-mode="paris"><span>Eiffel Tower</span></button>
+          <button class="tab-btn" data-mode="sagrada"><span>Sagrada Família</span></button>
+          <button class="tab-btn" data-mode="jet"><span>MiG-23</span></button>
+          <button class="tab-btn" data-mode="car"><span>Race Car</span></button>
+          <button class="tab-btn" data-mode="fan"><span>Retro Desk Fan</span></button>
+          <button class="tab-btn" data-mode="chair"><span>Armchair</span></button>
+          <button class="tab-btn" data-mode="coin"><span>Coin</span></button>
+          <button class="tab-btn" data-mode="tnt"><span>TNT</span></button>
+          <button class="tab-btn" data-mode="showcase"><span>Game scene</span></button>
+        </div>
+      </section>
 
-      <!-- Reference Photos Action Button (no emojis) -->
-      <div class="action-bar">
-        <button id="btn-open-refs" class="ref-action-btn"
-          title="View reference photos and blueprints used for this model">
-          <span class="btn-text">Reference Photos & Blueprints</span>
-          <span class="btn-badge">View Sources</span>
-        </button>
-        <button id="btn-toggle-rotate" class="rotate-action-btn" title="Toggle Auto Rotate 360°">
-          <span class="btn-text">Auto Rotate</span>
-          <span class="btn-status" id="rotate-status">OFF</span>
-        </button>
-      </div>
-
-      <!-- Camera Views -->
-      <div id="jet-view-bar" class="view-bar">
-        <span class="export-title">Camera View:</span>
+      <section id="jet-view-bar" class="panel-section view-bar">
+        <h2 class="section-label">Camera</h2>
         <div class="view-buttons">
           <button class="view-btn" data-view="photo">Photo View</button>
           <button class="view-btn" data-view="trocadero">Trocadéro View</button>
-          <button class="view-btn" data-view="trocadero_pov">Trocadéro POV (Checkered Floor)</button>
-          <button class="view-btn" data-view="under">Under Tower (Bridge)</button>
-          <button class="view-btn" data-view="aerial">Aerial Panorama</button>
+          <button class="view-btn" data-view="trocadero_pov">Trocadéro POV</button>
+          <button class="view-btn" data-view="under">Under Tower</button>
+          <button class="view-btn" data-view="aerial">Aerial</button>
           <button class="view-btn" data-view="champ">Champ de Mars</button>
           <button class="view-btn active" data-view="tower">Eiffel Tower</button>
-          <button class="view-btn" data-view="spire">Spire & Summit</button>
-          <button class="view-btn" data-view="boat">River & Boat</button>
+          <button class="view-btn" data-view="spire">Spire</button>
+          <button class="view-btn" data-view="boat">River &amp; Boat</button>
           <button class="view-btn" data-view="top">Top View</button>
         </div>
-      </div>
+      </section>
 
-      <!-- 3D Model GLB Downloads -->
-      <div class="export-bar">
-        <span class="export-title">Download 3D Models (.GLB):</span>
-        <div class="export-links">
-          <a class="export-btn" href="./models/fan.glb" download="fan.glb">fan.glb</a>
-          <a class="export-btn" href="./models/paris.glb" download="paris.glb">paris.glb</a>
-          <a class="export-btn" href="./models/sagrada.glb" download="sagrada.glb">sagrada.glb</a>
-          <a class="export-btn" href="./models/jet.glb" download="jet.glb">jet.glb</a>
-          <a class="export-btn" href="./models/car.glb" download="car.glb">car.glb</a>
-          <a class="export-btn" href="./models/road.glb" download="road.glb">road.glb</a>
-          <a class="export-btn" href="./models/coin.glb" download="coin.glb">coin.glb</a>
-          <a class="export-btn" href="./models/tnt.glb" download="tnt.glb">tnt.glb</a>
+      <section class="panel-section">
+        <h2 class="section-label">Display</h2>
+        <button id="btn-toggle-rotate" class="option-row" type="button" role="switch" aria-checked="false">
+          <span class="option-name">Auto rotate</span>
+          <span class="switch" aria-hidden="true"></span>
+          <span id="rotate-status" class="sr-only">OFF</span>
+        </button>
+        <div class="option-row">
+          <span class="option-name" id="theme-label">Theme</span>
+          <div class="segmented" role="group" aria-labelledby="theme-label">
+            <button type="button" class="seg-btn" data-theme-value="light">Light</button>
+            <button type="button" class="seg-btn" data-theme-value="dark">Dark</button>
+          </div>
         </div>
-      </div>
+        <button id="btn-open-refs" class="text-btn" type="button">View reference images</button>
+      </section>
+
+      <section class="panel-section export-bar">
+        <h2 class="section-label">Download (.glb)</h2>
+        <div class="export-links">
+          <a class="export-btn" href="./models/paris.glb" download="paris.glb">paris</a>
+          <a class="export-btn" href="./models/sagrada.glb" download="sagrada.glb">sagrada</a>
+          <a class="export-btn" href="./models/jet.glb" download="jet.glb">jet</a>
+          <a class="export-btn" href="./models/car.glb" download="car.glb">car</a>
+          <a class="export-btn" href="./models/fan.glb" download="fan.glb">fan</a>
+          <a class="export-btn" href="./models/coin.glb" download="coin.glb">coin</a>
+          <a class="export-btn" href="./models/tnt.glb" download="tnt.glb">tnt</a>
+          <a class="export-btn" href="./models/road.glb" download="road.glb">road</a>
+        </div>
+      </section>
     </div>
-  </div>
+  </aside>
 
   <!-- 3D World Anchored Hover Tooltip -->
   <div id="tnt-world-tooltip" class="tnt-world-tooltip hidden">
